@@ -11,4 +11,3 @@ data/tempo/
 .data/
 .vercel
 .env*.local
-.blob_manifest.json

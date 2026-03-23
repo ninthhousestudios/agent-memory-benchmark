@@ -14,25 +14,48 @@ from fastapi.staticfiles import StaticFiles
 app = FastAPI()
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-_root = Path(os.environ.get("OMB_ROOT", Path(__file__).parents[2]))
-_output_dir = Path(os.environ.get("OMB_OUTPUT_DIR", _root / "outputs"))
-_data_dir = Path(os.environ.get("OMB_DATA_DIR", _root / "data"))
+_root = Path(os.environ.get("AMB_ROOT", Path(__file__).parents[2]))
+_output_dir = Path(os.environ.get("AMB_OUTPUT_DIR", _root / "outputs"))
+_data_dir = Path(os.environ.get("AMB_DATA_DIR", _root / "data"))
 _ui_dist = _root / "ui" / "dist"
 
 # Optional Vercel Blob base URL for serving data/ files when not on disk
 _BLOB_BASE = os.environ.get(
-    "OMB_BLOB_BASE_URL",
+    "AMB_BLOB_BASE_URL",
     "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com",
 )
 
 
+def _load_blob_manifest() -> dict:
+    """Load .blob_manifest.json (maps relative paths to {sha, url})."""
+    path = _root / ".blob_manifest.json"
+    if path.exists():
+        try:
+            return _json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {}
+
+
+def _blob_url(relative_path: str) -> str:
+    """Resolve the actual Vercel Blob URL for a relative path."""
+    manifest = _load_blob_manifest()
+    entry = manifest.get(relative_path)
+    if isinstance(entry, dict) and entry.get("url"):
+        return entry["url"]
+    return f"{_BLOB_BASE}/{relative_path}"
+
+
 def _fetch_blob(relative_path: str) -> bytes:
-    """Fetch a file from Vercel Blob and cache it in /tmp."""
+    """Fetch a file from Vercel Blob and cache it in /tmp, keyed by URL."""
+    import hashlib
     import urllib.request
-    cache_path = Path(tempfile.gettempdir()) / "omb_blob" / relative_path
+    url = _blob_url(relative_path)
+    url_hash = hashlib.md5(url.encode()).hexdigest()[:16]
+    cache_name = Path(relative_path).name + "." + url_hash
+    cache_path = Path(tempfile.gettempdir()) / "amb_blob" / cache_name
     if cache_path.exists():
         return cache_path.read_bytes()
-    url = f"{_BLOB_BASE}/{relative_path}"
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     with urllib.request.urlopen(url) as resp:
         data = resp.read()
@@ -361,6 +384,20 @@ def split_category_breakdown(dataset: str, split: str):
         })
 
     return JSONResponse(out)
+
+
+@app.get("/api/run-url")
+def run_url(file: str):
+    """Return the direct Blob CDN URL for an output file, if available.
+
+    Uses ?file= to avoid collision with Vercel's :path* rewrite capture.
+    Returns {"url": null} when the file is served locally (dev mode).
+    """
+    gz_path = file if file.endswith(".gz") else file + ".gz"
+    if (_root / file).exists() or (_root / gz_path).exists():
+        return JSONResponse({"url": None})
+    url = _blob_url(gz_path)
+    return JSONResponse({"url": url})
 
 
 @app.get("/api/external-results")

@@ -31,6 +31,25 @@ export async function fetchSplitStats(dataset, split) {
 }
 
 export async function fetchRunData(path) {
+  // Ask the server if there's a direct CDN URL (avoids large proxy through the server)
+  try {
+    const urlRes = await fetch('/api/run-url?file=' + encodeURIComponent(path))
+    if (urlRes.ok) {
+      const { url } = await urlRes.json()
+      if (url) {
+        // Fetch gzip directly from CDN and decompress client-side
+        const blobRes = await fetch(url)
+        if (!blobRes.ok) throw new Error(`CDN fetch failed: ${blobRes.status}`)
+        const ds = new DecompressionStream('gzip')
+        const text = await new Response(blobRes.body.pipeThrough(ds)).text()
+        return JSON.parse(text)
+      }
+    }
+  } catch (e) {
+    if (e.message?.startsWith('CDN fetch failed')) throw e
+    // Fall through to server proxy on unexpected errors
+  }
+  // Local dev: server serves the file directly
   const res = await fetch('/' + path)
   if (!res.ok) throw new Error(`Failed to load ${path}`)
   return res.json()
