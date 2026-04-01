@@ -255,6 +255,15 @@ def _generate_catalog() -> dict:
     def _task_label(task_type: str) -> str:
         return "MCQ" if task_type == "mcq" else "LLM-judged"
 
+    import json as _json
+    ext_path = _root / "external_results.json"
+    _ext_datasets: set[str] = set()
+    if ext_path.exists():
+        try:
+            _ext_datasets = set(_json.loads(ext_path.read_text(encoding="utf-8")).keys())
+        except Exception:
+            pass
+
     datasets = {
         name: {
             "description": cls.description,
@@ -262,7 +271,7 @@ def _generate_catalog() -> dict:
             "splits": cls.splits,
         }
         for name, cls in DS_REGISTRY.items()
-        if (_data_dir / name).exists()
+        if (_data_dir / name).exists() or name in _ext_datasets
     }
     providers: dict = {}
     for key, cls in MEM_REGISTRY.items():

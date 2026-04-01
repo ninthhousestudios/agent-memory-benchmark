@@ -26,7 +26,7 @@ class Mem0MemoryProvider(MemoryProvider):
         self._memory: Memory | None = None
         self._default_user_id = f"bench_{uuid.uuid4().hex[:8]}"
 
-    def prepare(self, store_dir: Path, unit_ids: set[str] | None = None) -> None:
+    def prepare(self, store_dir: Path, unit_ids: set[str] | None = None, reset: bool = True) -> None:
         qdrant_path = store_dir / "qdrant"
         qdrant_path.mkdir(parents=True, exist_ok=True)
         self._memory = self._build_memory(str(qdrant_path))

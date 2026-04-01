@@ -1,5 +1,15 @@
 {
   "datasets": {
+    "beam": {
+      "description": "Long-context memory benchmark: 100 conversations (100K\u201310M tokens), 2 000 questions across 10 memory ability categories.",
+      "task": "LLM-judged",
+      "splits": [
+        "100k",
+        "500k",
+        "1m",
+        "10m"
+      ]
+    },
     "lifebench": {
       "description": "Long-horizon multi-source personalized memory benchmark across 10 users.",
       "task": "LLM-judged",
@@ -21,24 +31,18 @@
         "s"
       ]
     },
-    "personamem": {
-      "description": "Long-horizon personal preference tracking across conversation sessions.",
+    "membench": {
+      "description": "Agent memory at different abstraction levels and perspectives.",
       "task": "MCQ",
       "splits": [
-        "32k",
-        "128k",
-        "1M"
-      ]
-    },
-    "ama-bench": {
-      "description": "Agent trajectory memory benchmark across Text-to-SQL, Web, Gaming, Embodied AI, SE, and Tool QA domains.",
-      "task": "LLM-judged",
-      "splits": [
-        "test"
+        "FirstAgentLowLevel",
+        "FirstAgentHighLevel",
+        "ThirdAgentLowLevel",
+        "ThirdAgentHighLevel"
       ]
     },
     "memsim": {
-      "description": "Chinese daily-life memory simulation with diverse QA types across 6 question categories.",
+      "description": "Chinese daily-life memory simulation with diverse QA types.",
       "task": "MCQ",
       "splits": [
         "simple",
@@ -49,14 +53,13 @@
         "noisy"
       ]
     },
-    "membench": {
-      "description": "Agent memory benchmark at different abstraction levels and first/third-person perspectives.",
+    "personamem": {
+      "description": "Long-horizon personal preference tracking across conversation sessions.",
       "task": "MCQ",
       "splits": [
-        "FirstAgentLowLevel",
-        "FirstAgentHighLevel",
-        "ThirdAgentLowLevel",
-        "ThirdAgentHighLevel"
+        "32k",
+        "128k",
+        "1M"
       ]
     }
   },
@@ -126,11 +129,8 @@
         }
       }
     },
-    "qdrant": {
+    "hybrid-search": {
       "key": "qdrant",
-      "aliases": [
-        "hybrid-search"
-      ],
       "description": "Hybrid dense + sparse vector search via Qdrant with RRF fusion. Dense: Qwen3-Embedding-0.6B (1024d, asymmetric query/doc encoding). Sparse: BM42 (bm42-all-minilm-l6-v2-attentions). Documents chunked into 512-token windows before indexing. Retrieves top-k=50 chunks (prefetch 100 per branch).",
       "kind": "local",
       "link": "https://qdrant.tech",

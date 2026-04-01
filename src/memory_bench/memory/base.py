@@ -22,7 +22,7 @@ class MemoryProvider(ABC):
     def cleanup(self) -> None:
         """Optional hook called after the run completes. Inverse of initialize."""
 
-    def prepare(self, store_dir: Path, unit_ids: set[str] | None = None) -> None:
+    def prepare(self, store_dir: Path, unit_ids: set[str] | None = None, reset: bool = True) -> None:
         """Optional hook called before ingest/retrieve with a persistent storage directory.
         Providers that need on-disk state (e.g. a vector store) should initialise it here.
 
