@@ -83,5 +83,21 @@
   "outputs/lifebench/hybrid-search/rag/en.json.gz": {
     "sha": "b363e064f994644a22cdfdfea4450a1f9b7117282348752a2557e05dc3fda385",
     "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/lifebench/hybrid-search/rag/en.json-wHBzAd8q537Fywz90faSy2VehSHD9D.gz"
+  },
+  "outputs/beam/hindsight/single-query/100k.json.gz": {
+    "sha": "ee26d546c98b828a47046fc2374e9dd1531f68d0f27eaca12a68eb0f18e32cdc",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/beam/hindsight/single-query/100k.json-M28AcuQcm00IOR6T4DdCcfC6qP8cFt.gz"
+  },
+  "outputs/beam/hindsight/single-query/500k.json.gz": {
+    "sha": "e588ab2ef64ab01da048e65455cbed9745a5fdea42f5a7e7f1c652dfba76ce7c",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/beam/hindsight/single-query/500k.json-uxzTgx8ecGn1BKnLI5CZGRPStsUvoW.gz"
+  },
+  "outputs/beam/hindsight/single-query/1m.json.gz": {
+    "sha": "95e87a30e4e01031676d07babda22d72b033eb47ce91a200dad3b86bd0601a42",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/beam/hindsight/single-query/1m.json-R4sVzD3mkGUNyr0m2gx3EQkgSLvEBE.gz"
+  },
+  "outputs/beam/hindsight/single-query/10m.json.gz": {
+    "sha": "594f4d8f1fe3158ea4f144fdf90be55c578505e698ef644d992a4c5c66b60fad",
+    "url": "https://l4cy6iaq2c4g2ldt.public.blob.vercel-storage.com/outputs/beam/hindsight/single-query/10m.json-E0CaKGmXRhxJQehl9laFAOnWTiK8N2.gz"
   }
 }
