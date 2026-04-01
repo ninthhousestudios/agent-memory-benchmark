@@ -848,5 +848,87 @@
         "source_label": "MemBench Paper (standard context)"
       }
     ]
+  },
+  "beam": {
+    "100k": [
+      {
+        "memory": "Hindsight RAG (Honcho)",
+        "accuracy": 0.63,
+        "source_url": "https://evals.honcho.dev/",
+        "source_label": "Honcho (evals.honcho.dev)"
+      },
+      {
+        "memory": "LIGHT (Llama-4-Maverick)",
+        "accuracy": 0.358,
+        "source_url": "https://arxiv.org/abs/2510.27246",
+        "source_label": "BEAM Paper (arXiv:2510.27246)"
+      },
+      {
+        "memory": "RAG (Llama-4-Maverick)",
+        "accuracy": 0.323,
+        "source_url": "https://arxiv.org/abs/2510.27246",
+        "source_label": "BEAM Paper (arXiv:2510.27246)"
+      }
+    ],
+    "500k": [
+      {
+        "memory": "Hindsight RAG (Honcho)",
+        "accuracy": 0.649,
+        "source_url": "https://evals.honcho.dev/",
+        "source_label": "Honcho (evals.honcho.dev)"
+      },
+      {
+        "memory": "LIGHT (Llama-4-Maverick)",
+        "accuracy": 0.359,
+        "source_url": "https://arxiv.org/abs/2510.27246",
+        "source_label": "BEAM Paper (arXiv:2510.27246)"
+      },
+      {
+        "memory": "RAG (Llama-4-Maverick)",
+        "accuracy": 0.33,
+        "source_url": "https://arxiv.org/abs/2510.27246",
+        "source_label": "BEAM Paper (arXiv:2510.27246)"
+      }
+    ],
+    "1m": [
+      {
+        "memory": "Hindsight RAG (Honcho)",
+        "accuracy": 0.631,
+        "source_url": "https://evals.honcho.dev/",
+        "source_label": "Honcho (evals.honcho.dev)"
+      },
+      {
+        "memory": "LIGHT (Llama-4-Maverick)",
+        "accuracy": 0.336,
+        "source_url": "https://arxiv.org/abs/2510.27246",
+        "source_label": "BEAM Paper (arXiv:2510.27246)"
+      },
+      {
+        "memory": "RAG (Llama-4-Maverick)",
+        "accuracy": 0.307,
+        "source_url": "https://arxiv.org/abs/2510.27246",
+        "source_label": "BEAM Paper (arXiv:2510.27246)"
+      }
+    ],
+    "10m": [
+      {
+        "memory": "Hindsight RAG (Honcho)",
+        "accuracy": 0.406,
+        "source_url": "https://evals.honcho.dev/",
+        "source_label": "Honcho (evals.honcho.dev)"
+      },
+      {
+        "memory": "LIGHT (Llama-4-Maverick)",
+        "accuracy": 0.266,
+        "source_url": "https://arxiv.org/abs/2510.27246",
+        "source_label": "BEAM Paper (arXiv:2510.27246)"
+      },
+      {
+        "memory": "RAG (Llama-4-Maverick)",
+        "accuracy": 0.249,
+        "source_url": "https://arxiv.org/abs/2510.27246",
+        "source_label": "BEAM Paper (arXiv:2510.27246)"
+      }
+    ]
   }
 }

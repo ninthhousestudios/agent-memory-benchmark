@@ -176,6 +176,16 @@ class PersonaMemDataset(Dataset):
     # Dataset interface
     # ------------------------------------------------------------------
 
+    def build_rag_prompt(self, query: str, context: str, task_type: str, split: str, category: str | None = None, meta: dict | None = None) -> str:
+        if task_type == "mcq":
+            return (
+                f"The following is the user's memory/history:\n\n{context}\n\n"
+                f"{query}\n\n"
+                f"Find the most appropriate response given the user's history. Answer with only the letter (a), (b), (c), or (d)."
+            )
+        from .base import _DEFAULT_OPEN_PROMPT
+        return _DEFAULT_OPEN_PROMPT.format(context=context, query=query)
+
     def get_result_categories(self, meta: dict) -> dict[str, list[str]]:
         c = meta.get("question_type")
         return {"Question Type": [c]} if c else {}

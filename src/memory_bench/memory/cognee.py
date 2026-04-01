@@ -113,13 +113,13 @@ class CogneeMemoryProvider(MemoryProvider):
             dataset = self._dataset_name(user_id)
             for doc in docs:
                 await cognee.add(doc.content, dataset_name=dataset)
-            await cognee.cognify([dataset], chunk_size=512)
+            await cognee.cognify([dataset], chunk_size=512, chunks_per_batch=1)
 
     def retrieve(self, query: str, k: int = 10, user_id: str | None = None, query_timestamp: str | None = None) -> tuple[list[Document], dict | None]:
-        return self._run(self._retrieve_async(query, k, user_id))
+        return self._run(self._retrieve_async(query, user_id))
 
     async def _retrieve_async(
-        self, query: str, k: int, user_id: str | None
+        self, query: str, user_id: str | None
     ) -> tuple[list[Document], dict | None]:
         from cognee.api.v1.search import SearchType
 
@@ -128,14 +128,13 @@ class CogneeMemoryProvider(MemoryProvider):
             query_text=query,
             query_type=SearchType.CHUNKS,
             datasets=[dataset],
+            top_k=50,
         )
 
         docs: list[Document] = []
         for r in results or []:
             for content, doc_id in _chunks_from_result(r):
                 docs.append(Document(id=doc_id, content=content))
-                if len(docs) >= k:
-                    break
 
         # Serialize raw results (UUIDs etc. need str conversion)
         def _jsonable(obj):

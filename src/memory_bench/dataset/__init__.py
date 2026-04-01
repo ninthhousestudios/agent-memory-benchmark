@@ -1,4 +1,5 @@
 from .base import Dataset
+from .beam import BEAMDataset
 from .lifebench import LifeBenchDataset
 from .locomo import LoComoDataset
 from .longmemeval import LongMemEvalDataset
@@ -7,6 +8,7 @@ from .memsim import MemSimDataset
 from .personamem import PersonaMemDataset
 
 REGISTRY: dict[str, type[Dataset]] = {
+    "beam":         BEAMDataset,
     "lifebench":    LifeBenchDataset,
     "locomo":       LoComoDataset,
     "longmemeval":  LongMemEvalDataset,

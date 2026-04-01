@@ -33,12 +33,12 @@ class HybridSearchMemoryProvider(MemoryProvider):
         self._dense_model: SentenceTransformer | None = None
         self._sparse_model = None
 
-    def prepare(self, store_dir: Path, unit_ids: set[str] | None = None) -> None:
+    def prepare(self, store_dir: Path, unit_ids: set[str] | None = None, reset: bool = True) -> None:
         qdrant_path = store_dir / "qdrant"
         qdrant_path.mkdir(parents=True, exist_ok=True)
         self._client = QdrantClient(path=str(qdrant_path))
         self._init_models()
-        self._setup_collection()
+        self._setup_collection(reset=reset)
 
     def _ensure_ready(self) -> QdrantClient:
         if self._client is None:
@@ -52,9 +52,11 @@ class HybridSearchMemoryProvider(MemoryProvider):
         self._dense_model = SentenceTransformer(_DENSE_MODEL, trust_remote_code=True, device="cpu")
         self._sparse_model = SparseTextEmbedding(model_name=_SPARSE_MODEL)
 
-    def _setup_collection(self) -> None:
+    def _setup_collection(self, reset: bool = True) -> None:
         existing = {c.name for c in self._client.get_collections().collections}
         if _COLLECTION in existing:
+            if not reset:
+                return  # reuse existing collection (skip-ingestion mode)
             self._client.delete_collection(_COLLECTION)
         self._client.create_collection(
             collection_name=_COLLECTION,
