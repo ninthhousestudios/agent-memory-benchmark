@@ -15,8 +15,10 @@ _CHITTA_REPO = os.environ.get("CHITTA_REPO", "")
 
 
 def _ensure_chitta():
-    if _CHITTA_REPO and _CHITTA_REPO not in sys.path:
-        sys.path.insert(0, os.path.join(_CHITTA_REPO, "src"))
+    if _CHITTA_REPO:
+        src_path = os.path.join(_CHITTA_REPO, "src")
+        if src_path not in sys.path:
+            sys.path.insert(0, src_path)
     os.environ.setdefault("DATABASE_BACKEND", "postgres")
     os.environ.setdefault("EMBEDDING_PROVIDER", "onnx")
 
@@ -34,11 +36,31 @@ class ChittaMCPMemoryProvider(MemoryProvider):
     link = "https://github.com/josh/chitta"
     concurrency = 8
 
-    def __init__(self, k: int = 20, extract_facts: bool = False):
+    def __init__(
+        self,
+        k: int = 20,
+        extract_facts: bool = False,
+        chunk_size: int | None = None,
+        chunk_overlap: int | None = None,
+        turns_per_chunk: int | None = None,
+        overlap_turns: int | None = None,
+    ):
         self.k = k
         self._profile_prefix = "amb_"
         self._extract_facts_enabled = extract_facts
         self._extractor_client = None
+        # CHITTA_CHUNK_SIZE/CHUNK_OVERLAP override kwargs so the sweep
+        # harness can vary them without editing the provider class.
+        self.chunk_size = int(os.environ.get("CHITTA_CHUNK_SIZE") or chunk_size or 512)
+        self.chunk_overlap = int(
+            os.environ.get("CHITTA_CHUNK_OVERLAP") or chunk_overlap or 64
+        )
+        self.turns_per_chunk = int(
+            os.environ.get("CHITTA_TURNS_PER_CHUNK") or turns_per_chunk or 4
+        )
+        self.overlap_turns = int(
+            os.environ.get("CHITTA_OVERLAP_TURNS") or overlap_turns or 1
+        )
 
     def initialize(self) -> None:
         _ensure_chitta()
@@ -61,7 +83,7 @@ class ChittaMCPMemoryProvider(MemoryProvider):
         return f"{self._profile_prefix}{user_id or 'default'}"
 
     @staticmethod
-    def _format_content(doc: Document) -> str:
+    def _extract_messages(doc: Document) -> list[dict] | None:
         import json
 
         messages = doc.messages
@@ -70,56 +92,50 @@ class ChittaMCPMemoryProvider(MemoryProvider):
                 messages = json.loads(doc.content)
             except (json.JSONDecodeError, TypeError):
                 pass
-
         if messages and isinstance(messages, list):
-            parts = []
-            for msg in messages:
-                if isinstance(msg, dict):
-                    role = "User" if msg.get("role") == "user" else "Assistant"
-                    content = msg.get("content", "").strip()
-                    if content:
-                        parts.append(f"{role}: {content}")
-            if parts:
-                text = "\n".join(parts)
-                if doc.timestamp:
-                    text = f"[Date: {doc.timestamp}]\n{text}"
-                return text
-
-        return doc.content
+            return messages
+        return None
 
     def ingest(self, documents: list[Document]) -> None:
-        from chitta.embeddings import generate_embeddings_batch
-        from chitta.database import get_backend
+        from chitta.service import store_memory_chunked
 
-        backend = get_backend()
-
-        texts = [self._format_content(doc) for doc in documents]
-        if not texts:
-            return
-
-        embeddings = generate_embeddings_batch(texts)
-
-        rows = []
-        for i, (text, emb) in enumerate(zip(texts, embeddings)):
-            d = documents[i]
+        for d in documents:
             profile = self._profile(d.user_id)
             tags = []
             if d.timestamp:
                 tags.append(f"date:{d.timestamp}")
-            rows.append(
-                {
-                    "content": text,
-                    "embedding": str(emb),
-                    "profile": profile,
-                    "source": "amb",
-                    "tags": tags,
-                    "metadata": {"doc_id": d.id},
-                }
-            )
+            prefix = f"[Date: {d.timestamp}]" if d.timestamp else None
+            metadata = {"doc_id": d.id}
 
-        for i in range(0, len(rows), 100):
-            batch = rows[i : i + 100]
-            backend.store_memories_batch(batch)
+            messages = self._extract_messages(d)
+            if messages:
+                store_memory_chunked(
+                    profile=profile,
+                    messages=messages,
+                    source="amb",
+                    tags=tags,
+                    metadata=metadata,
+                    target_tokens=self.chunk_size,
+                    overlap_tokens=self.chunk_overlap,
+                    turns_per_chunk=self.turns_per_chunk,
+                    overlap_turns=self.overlap_turns,
+                    prefix=prefix,
+                    auto_link=False,
+                    follows_edges=True,
+                )
+            else:
+                store_memory_chunked(
+                    profile=profile,
+                    content=d.content,
+                    source="amb",
+                    tags=tags,
+                    metadata=metadata,
+                    target_tokens=self.chunk_size,
+                    overlap_tokens=self.chunk_overlap,
+                    prefix=prefix,
+                    auto_link=False,
+                    follows_edges=True,
+                )
 
     def _get_extractor(self):
         if self._extractor_client is None:
