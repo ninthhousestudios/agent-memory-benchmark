@@ -45,7 +45,9 @@ class ChittaMCPMemoryProvider(MemoryProvider):
         turns_per_chunk: int | None = None,
         overlap_turns: int | None = None,
     ):
-        self.k = k
+        # CHITTA_K env var overrides the harness-supplied k so chunk/k
+        # sweeps can vary retrieval depth without editing caller code.
+        self.k = int(os.environ.get("CHITTA_K") or k)
         self._profile_prefix = "amb_"
         self._extract_facts_enabled = extract_facts
         self._extractor_client = None
@@ -190,10 +192,12 @@ Extract relevant facts as a concise bulleted list. Preserve specific details: na
         from chitta.service import search_memories_enriched
 
         profile = self._profile(user_id)
+        # self.k (possibly from CHITTA_K env) takes precedence over the
+        # harness default so sweeps can widen recall without harness edits.
         results = search_memories_enriched(
             query=query,
             profile=profile,
-            limit=k or self.k,
+            limit=self.k,
         )
 
         if not results:
