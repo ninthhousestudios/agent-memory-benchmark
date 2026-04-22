@@ -204,9 +204,10 @@ class ChittaMCPMemoryProvider(MemoryProvider):
             end = min(start + self.turns_per_chunk, len(messages))
             chunk_msgs = messages[start:end]
             chunks.append(self._format_messages(chunk_msgs))
-            start = end - self.overlap_turns
-            if start >= len(messages) or start <= (end - self.turns_per_chunk):
+            next_start = end - self.overlap_turns
+            if next_start <= start or next_start >= len(messages):
                 break
+            start = next_start
         return chunks
 
     @staticmethod
