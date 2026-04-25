@@ -66,8 +66,10 @@ class _McpClient:
     @staticmethod
     def _parse_sse(text: str) -> dict:
         for line in reversed(text.splitlines()):
-            if line.startswith("data: "):
-                return json.loads(line[6:])
+            if line.startswith("data:"):
+                payload = line[5:].strip()
+                if payload:
+                    return json.loads(payload)
         raise RuntimeError(f"No data line in SSE response: {text[:500]}")
 
     def initialize(self) -> None:
