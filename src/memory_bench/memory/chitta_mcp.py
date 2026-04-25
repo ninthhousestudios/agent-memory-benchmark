@@ -4,8 +4,10 @@ Talks to chitta-rs over streamable HTTP MCP (JSON-RPC).
 Default endpoint: http://127.0.0.1:3100/mcp
 """
 
+import hashlib
 import json
 import os
+import re
 import uuid
 from pathlib import Path
 
@@ -165,7 +167,10 @@ class ChittaMCPMemoryProvider(MemoryProvider):
             self._mcp = None
 
     def _profile(self, user_id: str | None) -> str:
-        return f"{self._profile_prefix}{user_id or 'default'}"
+        uid = user_id or "default"
+        if not re.fullmatch(r"[a-zA-Z0-9_-]+", uid):
+            uid = hashlib.sha256(uid.encode()).hexdigest()[:16]
+        return f"{self._profile_prefix}{uid}"
 
     @staticmethod
     def _extract_messages(doc: Document) -> list[dict] | None:
