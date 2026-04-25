@@ -150,6 +150,26 @@ class LifeBenchDataset(Dataset):
         return mapping
 
     @staticmethod
+    def _build_evidence_to_sessions(conv: dict, session_keys: list[str]) -> dict[str, set[str]]:
+        """Map evidence IDs to session keys via dia_id suffix matching.
+
+        dia_ids have date prefixes (e.g. '2025-01-03_agent_chat3_0'),
+        while evidence IDs are bare (e.g. 'agent_chat3'). Match by
+        stripping the date prefix and checking if the suffix equals or
+        starts with the evidence ID + '_'.
+        """
+        suffix_to_sessions: dict[str, set[str]] = {}
+        for key in session_keys:
+            for turn in conv.get(key, []):
+                if not isinstance(turn, dict) or "dia_id" not in turn:
+                    continue
+                dia_id = str(turn["dia_id"])
+                # Strip 'YYYY-MM-DD_' prefix
+                suffix = dia_id[11:] if len(dia_id) > 11 and dia_id[10] == "_" else dia_id
+                suffix_to_sessions.setdefault(suffix, set()).add(key)
+        return suffix_to_sessions
+
+    @staticmethod
     def _session_content(turns: list) -> str:
         return json.dumps(turns)
 
@@ -257,7 +277,7 @@ If it's correct, set correct=true.
 
             conv = item["conversation"]
             session_keys = self._session_keys(conv)
-            dia_to_session = self._build_dia_to_session(conv, session_keys)
+            evidence_map = self._build_evidence_to_sessions(conv, session_keys)
 
             # Query timestamp = date of the last session
             last_session_ts: str | None = None
@@ -276,12 +296,14 @@ If it's correct, set correct=true.
                 answer = qa.get("answer", "")
                 evidence = qa.get("evidence") or []
 
-                # Map evidence dia_ids → unique session doc IDs
-                gold_session_keys = {
-                    dia_to_session[str(eid)]
-                    for eid in evidence
-                    if str(eid) in dia_to_session
-                }
+                # Map evidence IDs → unique session doc IDs via suffix matching
+                gold_session_keys: set[str] = set()
+                for eid in evidence:
+                    eid_str = str(eid)
+                    # Exact suffix match or prefix match (eid + '_')
+                    for suffix, sessions in evidence_map.items():
+                        if suffix == eid_str or suffix.startswith(eid_str + "_"):
+                            gold_session_keys.update(sessions)
                 gold_ids = [f"{sample_id}_{sk}" for sk in sorted(gold_session_keys)]
 
                 queries.append(Query(
